@@ -210,7 +210,7 @@
                 </div>
 
                 <div class="text-center mt-3">
-                  <small class="footer-note">Modo: <span id="modoLabel">Prod</span> • Los datos se registrarán.</small>
+                  <small class="footer-note">Modo: <span id="modoLabel">test</span> • Los datos se registrarán.</small>
                 </div>
               </form>
             </div>
@@ -258,6 +258,44 @@
       const webhookURL = urls[modo];
       document.getElementById("modoLabel").textContent = (modo === "produccion" ? "producción" : "test");
 
+      // ====== CHATWOOT: obtener contexto para metadata ======
+      let chatwootMeta = {};
+      const isJSON = (s) => { try { JSON.parse(s); return true; } catch { return false; } };
+
+      // Escuchar mensaje con el contexto desde Chatwoot
+      window.addEventListener("message", (event) => {
+        if (!isJSON(event.data)) return;
+        const ev = JSON.parse(event.data);
+        if (ev.event === "appContext") {
+          const ctx = ev.data || {};
+          // Construir metadata segura
+          chatwootMeta = {
+            account_id: ctx.account?.id ?? null,
+            account_name: ctx.account?.name ?? null,
+            inbox_id: ctx.inbox?.id ?? null,
+            inbox_name: ctx.inbox?.name ?? null,
+
+            conversation_id: ctx.conversation?.id ?? null,
+            conversation_status: ctx.conversation?.status ?? null, // open, resolved, snoozed...
+            assignee_id: ctx.conversation?.assignee?.id ?? null,
+            assignee_name: ctx.conversation?.assignee?.name ?? null,
+
+            current_user_id: ctx.current_user?.id ?? null,
+            current_user_name: ctx.current_user?.name ?? null, // agente que está usando el widget
+
+            contact_id: ctx.contact?.id ?? null,
+            contact_name: ctx.contact?.name ?? null,
+            contact_email: ctx.contact?.email ?? null,
+            contact_phone: ctx.contact?.phone_number ?? null,
+
+            labels: ctx.conversation?.labels ?? []
+          };
+        }
+      });
+
+      // Pedir el contexto al cargar (funciona cuando el HTML está incrustado como Dashboard App)
+      window.parent?.postMessage('chatwoot-dashboard-app:fetch-info', '*');
+
       // ====== UI Helpers ======
       const toast = (id) => new bootstrap.Toast(document.getElementById(id), { delay: 3000 });
       const btnEnviar = document.getElementById("btnEnviar");
@@ -289,6 +327,9 @@
             cantidad: Number(document.getElementById("cantidad").value),
             precio: Number(document.getElementById("precio").value),
             observacion: document.getElementById("observacion").value.trim(),
+
+            // 👉 Metadata de Chatwoot
+            chatwootMeta
           };
 
           try {
