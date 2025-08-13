@@ -1,150 +1,551 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cierre de Venta - Zapatería</title>
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cierre de Venta - Zapatería</title>
 
-  <div class="container mt-5">
-    <div class="card shadow-lg border-0">
-      <div class="card-header bg-success text-white text-center">
-        <h3>Formulario de Cierre de Venta</h3>
+    <!-- Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Bootstrap Icons -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --brand-1: #16a34a; /* emerald-600 */
+        --brand-2: #22c55e; /* emerald-500 */
+        --ink: #0f172a; /* slate-900 */
+        --muted: #64748b; /* slate-500 */
+        --card: #ffffff;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto,
+          "Helvetica Neue", Arial, "Noto Sans";
+        background: radial-gradient(
+            1200px 600px at 10% -10%,
+            rgba(34, 197, 94, 0.18) 0,
+            rgba(34, 197, 94, 0) 50%
+          ),
+          radial-gradient(
+            1000px 500px at 110% 10%,
+            rgba(16, 185, 129, 0.16) 0,
+            rgba(16, 185, 129, 0) 55%
+          ),
+          linear-gradient(180deg, #f7f7f7, #f0fdf4);
+        color: var(--ink);
+      }
+      .brand-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 999px;
+        background: rgba(34, 197, 94, 0.1);
+        color: #065f46;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+      }
+      .brand-badge .dot {
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
+      }
+      .hero {
+        text-align: center;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+      }
+      .hero h1 {
+        font-weight: 800;
+        letter-spacing: 0.2px;
+        margin: 0.5rem 0 0 0;
+        background: linear-gradient(135deg, var(--ink) 0%, #065f46 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .hero p {
+        color: var(--muted);
+        margin: 0;
+      }
+
+      .card.lift {
+        border: 0;
+        border-radius: 1.25rem;
+        overflow: hidden;
+        background: var(--card);
+        box-shadow: 0 20px 40px rgba(2, 6, 23, 0.06),
+          0 2px 8px rgba(2, 6, 23, 0.04);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .card.lift:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 24px 50px rgba(2, 6, 23, 0.08),
+          0 3px 10px rgba(2, 6, 23, 0.05);
+      }
+
+      .card-header.gradient {
+        background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
+        color: #fff;
+        border: 0;
+        padding: 1.25rem 1.5rem;
+      }
+      .card-header .subtitle {
+        opacity: 0.85;
+      }
+
+      .form-label {
+        font-weight: 600;
+      }
+      .required::after {
+        content: " *";
+        color: #ef4444;
+      }
+
+      .input-icon {
+        position: relative;
+      }
+      .input-icon .bi {
+        position: absolute;
+        left: 0.85rem;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.55;
+      }
+      .input-icon input,
+      .input-icon textarea {
+        padding-left: 2.25rem;
+      }
+      .input-icon select {
+        padding-left: 2.25rem;
+        appearance: none;
+      }
+
+      .helper {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      .btn-brand {
+        background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
+        border: 0;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        box-shadow: 0 10px 20px rgba(16, 185, 129, 0.25);
+      }
+      .btn-brand:hover {
+        filter: brightness(1.02);
+      }
+      .btn-brand:disabled {
+        opacity: 0.9;
+      }
+
+      .footer-note {
+        color: #6b7280;
+      }
+      .toast-container {
+        z-index: 1080;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="hero">
+        <span class="brand-badge"><span class="dot"></span> Bills Peru</span>
       </div>
-      <div class="card-body">
-        <form id="ventaForm">
-          <div class="mb-3">
-            <label for="dni" class="form-label">DNI</label>
-            <input type="text" class="form-control" id="dni" placeholder="Ej. 87654321" pattern="[0-9]{8}" title="Debe tener 8 dígitos" required>
+
+      <div class="row justify-content-center">
+        <div class="col-12 col-lg-8 col-xl-7">
+          <div class="card lift">
+            <div class="card-header gradient text-center">
+              <div class="h5 mb-0">Registro de ventas</div>
+              <div class="subtitle small">Completa los datos con tu venta</div>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+              <form id="ventaForm" class="needs-validation" novalidate>
+                <div class="row g-4">
+                  <div class="col-md-4">
+                    <label for="dni" class="form-label required">DNI</label>
+                    <div class="input-icon">
+                      <i class="bi bi-person-vcard"></i>
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="dni"
+                        placeholder="87654321"
+                        pattern="[0-9]{8}"
+                        title="Debe tener 8 dígitos"
+                        required
+                      />
+                      <div class="invalid-feedback">
+                        Ingresa un DNI válido de 8 dígitos.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-8">
+                    <label for="nombre" class="form-label required"
+                      >Nombre del Cliente</label
+                    >
+                    <div class="input-icon">
+                      <i class="bi bi-person-lines-fill"></i>
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="nombre"
+                        placeholder="Juan Pérez"
+                        required
+                      />
+                      <div class="invalid-feedback">
+                        Ingresa el nombre del cliente.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <label for="direccion" class="form-label required"
+                      >Dirección</label
+                    >
+                    <div class="input-icon">
+                      <i class="bi bi-geo-alt"></i>
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="direccion"
+                        placeholder="Av. Principal 123"
+                        required
+                      />
+                      <div class="invalid-feedback">Ingresa la dirección.</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label for="celular" class="form-label required"
+                      >Celular</label
+                    >
+                    <div class="input-icon">
+                      <i class="bi bi-phone"></i>
+                      <input
+                        type="tel"
+                        class="form-control"
+                        id="celular"
+                        placeholder="987654321"
+                        pattern="(\+51\s?)?9\d{8}|0\d{1,2}\d{6,7}"
+                        title="Debe ser un celular válido: 9 dígitos que comiencen con 9, o con código +51, o con código local"
+                        required
+                      />
+                      <div class="invalid-feedback">
+                        Ingresa un número válido (empieza con 9 y tiene 9
+                        dígitos).
+                      </div>
+                    </div>
+                    <div class="helper mt-1">Solo números, inicia con 9.</div>
+                  </div>
+
+                  <!-- SKU visible -->
+                  <div class="col-md-6">
+                    <label for="sku" class="form-label required">SKU</label>
+                    <div class="input-icon">
+                      <i class="bi bi-upc-scan"></i>
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="sku"
+                        placeholder="escribe el codigo del producto"
+                        required
+                      />
+                      <div class="invalid-feedback">
+                        Ingresa el SKU del producto.
+                      </div>
+                    </div>
+                    <div class="helper mt-1">Ej.: ZAP-CLAS-NEG-42</div>
+                  </div>
+
+                  <!-- NUEVO: Currier -->
+                  <div class="col-md-6">
+                    <label for="currier" class="form-label required"
+                      >Currier</label
+                    >
+                    <div class="input-icon">
+                      <i class="bi bi-truck"></i>
+                      <select class="form-select" id="currier" required>
+                        <option value="" selected disabled>
+                          Selecciona el currier
+                        </option>
+                        <option value="Shalom">Shalom</option>
+                        <option value="Radio Moto">Radio Moto</option>
+                        <option value="Otros">Otros</option>
+                      </select>
+                      <div class="invalid-feedback">Selecciona una opción.</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-3">
+                    <label for="talla" class="form-label required">Talla</label>
+                    <div class="input-icon">
+                      <i class="bi bi-rulers"></i>
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="talla"
+                        placeholder="42"
+                        required
+                      />
+                      <div class="invalid-feedback">Indica la talla.</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-3">
+                    <label for="cantidad" class="form-label required"
+                      >Cantidad</label
+                    >
+                    <div class="input-icon">
+                      <i class="bi bi-123"></i>
+                      <input
+                        type="number"
+                        class="form-control"
+                        id="cantidad"
+                        min="1"
+                        value="1"
+                        required
+                      />
+                      <div class="invalid-feedback">
+                        La cantidad debe ser al menos 1.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label for="precio" class="form-label required"
+                      >Pago Total</label
+                    >
+                    <div class="input-group">
+                      <span class="input-group-text">S/</span>
+                      <input
+                        type="number"
+                        class="form-control"
+                        id="precio"
+                        placeholder="150.00"
+                        min="1"
+                        step="0.01"
+                        required
+                      />
+                    </div>
+                    <div class="invalid-feedback">Ingresa el monto total.</div>
+                    <div class="helper mt-1">
+                      Incluye todos los cargos y descuentos.
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <label for="observacion" class="form-label"
+                      >Observación</label
+                    >
+                    <div class="input-icon">
+                      <i class="bi bi-chat-left-text"></i>
+                      <textarea
+                        class="form-control"
+                        id="observacion"
+                        placeholder="Notas adicionales..."
+                        rows="3"
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                  <button
+                    id="btnEnviar"
+                    type="submit"
+                    class="btn btn-brand btn-lg"
+                  >
+                    <span class="btn-text"
+                      ><i class="bi bi-check2-circle me-1"></i> Enviar</span
+                    >
+                    <span
+                      class="spinner-border spinner-border-sm ms-2 d-none"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                  </button>
+                </div>
+
+                <div class="text-center mt-3">
+                  <small class="footer-note"
+                    >Modo: <span id="modoLabel">producción</span> • Los datos se
+                    registrarán.</small
+                  >
+                </div>
+              </form>
+            </div>
           </div>
 
-          <div class="mb-3">
-            <label for="nombre" class="form-label">Nombre del Cliente</label>
-            <input type="text" class="form-control" id="nombre" placeholder="Ej. Juan Pérez" required>
+          <div class="text-center mt-3">
+            <small class="text-muted"
+              >©
+              <script>
+                document.write(new Date().getFullYear());
+              </script>
+              Bills Peru</small
+            >
           </div>
-
-          <div class="mb-3">
-            <label for="direccion" class="form-label">Dirección</label>
-            <input type="text" class="form-control" id="direccion" placeholder="Ej. Av. Principal 123" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="celular" class="form-label">Celular</label>
-            <input type="tel" class="form-control" id="celular" placeholder="Ej. 987654321" pattern="9[0-9]{8}" title="Debe comenzar con 9 y tener 9 dígitos" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="producto" class="form-label">Nombre del Producto</label>
-            <input type="text" class="form-control" id="producto" placeholder="Ej. Zapatos de cuero" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="talla" class="form-label">Talla</label>
-            <input type="text" class="form-control" id="talla" placeholder="Ej. 42" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="cantidad" class="form-label">Cantidad</label>
-            <input type="number" class="form-control" id="cantidad" min="1" value="1" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="precio" class="form-label">Pago Total</label>
-            <input type="number" class="form-control" id="precio" placeholder="Ej. 150" min="1" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="observacion" class="form-label">Observación</label>
-            <textarea class="form-control" id="observacion" placeholder="Notas adicionales..."></textarea>
-          </div>
-
-          <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-success btn-lg">Enviar</button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Bootstrap JS Bundle -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Toasts -->
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+      <div
+        id="toastOk"
+        class="toast align-items-center text-bg-success border-0"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="d-flex">
+          <div class="toast-body">✅ Datos enviados correctamente.</div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+            aria-label="Cerrar"
+          ></button>
+        </div>
+      </div>
+      <div
+        id="toastError"
+        class="toast align-items-center text-bg-danger border-0"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="d-flex">
+          <div class="toast-body">❌ Ocurrió un error al enviar los datos.</div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+            aria-label="Cerrar"
+          ></button>
+        </div>
+      </div>
+      <div
+        id="toastWarn"
+        class="toast align-items-center text-bg-warning border-0"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="d-flex">
+          <div class="toast-body">⚠ No se pudo conectar con el servidor.</div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+            aria-label="Cerrar"
+          ></button>
+        </div>
+      </div>
+    </div>
 
-  <script>
-    const modo = "produccion"; // Cambiar a "produccion" cuando esté listo, para test pon "test"
-    const urls = {
-      test: "https://n8n.srv936604.hstgr.cloud/webhook-test/29d2d0ba-2fb4-41fd-92a1-4a1867bb4e65",
-      produccion: "https://n8n.srv936604.hstgr.cloud/webhook/29d2d0ba-2fb4-41fd-92a1-4a1867bb4e65"
-    };
-    const webhookURL = urls[modo];
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    let chatwootContext = {};
+    <script>
+      // ====== CONFIG ======
+      const modo = "produccion"; // "produccion" | "test"
+      const urls = {
+        test: "https://n8n.srv936604.hstgr.cloud/webhook-test/29d2d0ba-2fb4-41fd-92a1-4a1867bb4e65",
+        produccion:
+          "https://n8n.srv936604.hstgr.cloud/webhook/29d2d0ba-2fb4-41fd-92a1-4a1867bb4e65",
+      };
+      const webhookURL = urls[modo];
+      document.getElementById("modoLabel").textContent =
+        modo === "produccion" ? "producción" : "test";
 
-    function isJSONValid(str) {
-      try {
-        JSON.parse(str);
-        return true;
-      } catch {
-        return false;
-      }
-    }
-
-    // Escuchar datos desde Chatwoot
-    window.addEventListener("message", function (event) {
-      if (!isJSONValid(event.data)) return;
-      const eventData = JSON.parse(event.data);
-
-      if (eventData.event === "appContext") {
-        chatwootContext = eventData.data;
-
-        // Autocompletar datos si existen
-        if (chatwootContext.contact) {
-          document.getElementById("nombre").value = chatwootContext.contact.name || "";
-          document.getElementById("celular").value = chatwootContext.contact.phone_number || "";
-        }
-      }
-    });
-
-    // Pedir datos a Chatwoot al cargar
-    window.parent.postMessage('chatwoot-dashboard-app:fetch-info', '*');
-
-    // Envío del formulario
-    document.getElementById("ventaForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const data = {
-        dni: document.getElementById("dni").value,
-        nombre: document.getElementById("nombre").value,
-        direccion: document.getElementById("direccion").value,
-        celular: document.getElementById("celular").value,
-        producto: document.getElementById("producto").value,
-        talla: document.getElementById("talla").value,
-        cantidad: document.getElementById("cantidad").value,
-        precio: document.getElementById("precio").value,
-        observacion: document.getElementById("observacion").value,
-        chatwootContext // Se envía todo el contexto del chat
+      // ====== UI Helpers ======
+      const toast = (id) =>
+        new bootstrap.Toast(document.getElementById(id), { delay: 3000 });
+      const btnEnviar = document.getElementById("btnEnviar");
+      const setLoading = (loading) => {
+        btnEnviar.disabled = loading;
+        btnEnviar
+          .querySelector(".spinner-border")
+          .classList.toggle("d-none", !loading);
+        btnEnviar.querySelector(".btn-text").innerHTML = loading
+          ? '<i class="bi bi-arrow-repeat me-1"></i> Enviando...'
+          : '<i class="bi bi-check2-circle me-1"></i> Enviar';
       };
 
-      try {
-        const response = await fetch(webhookURL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
+      // ====== Validación + Envío ======
+      (() => {
+        const form = document.getElementById("ventaForm");
+        form.addEventListener(
+          "submit",
+          async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
 
-        if (response.ok) {
-          alert("✅ Datos enviados correctamente");
-          document.getElementById("ventaForm").reset();
-        } else {
-          alert("❌ Error al enviar los datos");
-        }
-      } catch (error) {
-        alert("⚠ No se pudo conectar con el servidor");
-      }
-    });
-  </script>
+            form.classList.add("was-validated");
+            if (!form.checkValidity()) return;
 
-</body>
+            const payload = {
+              dni: document.getElementById("dni").value.trim(),
+              nombre: document.getElementById("nombre").value.trim(),
+              direccion: document.getElementById("direccion").value.trim(),
+              celular: document.getElementById("celular").value.trim(),
+              sku: document.getElementById("sku").value.trim(),
+              currier: document.getElementById("currier").value, // ✅ nuevo campo
+              talla: document.getElementById("talla").value.trim(),
+              cantidad: Number(document.getElementById("cantidad").value),
+              precio: Number(document.getElementById("precio").value),
+              observacion: document.getElementById("observacion").value.trim(),
+            };
+
+            try {
+              setLoading(true);
+              const response = await fetch(webhookURL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+
+              if (response.ok) {
+                toast("toastOk").show();
+                form.reset();
+                form.classList.remove("was-validated");
+              } else {
+                toast("toastError").show();
+              }
+            } catch (error) {
+              toast("toastWarn").show();
+            } finally {
+              setLoading(false);
+            }
+          },
+          false
+        );
+      })();
+    </script>
+  </body>
 </html>
