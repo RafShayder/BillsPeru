@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bills Peru — Buscador de Productos (Light)</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --brand-1:#22c55e;
+      --brand-2:#16a34a;
+      --bg-1:#0b1220;
+    }
+    body{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: radial-gradient(1000px 700px at 15% -10%, rgba(34,197,94,.15), transparent 70%),
+                  radial-gradient(600px 600px at 110% 10%, rgba(34,197,94,.10), transparent 60%),
+                  #0b1220;
+      color: #e5e7eb;
+    }
+    header.hero{
+      padding: 24px 0 8px;
+      background: linear-gradient(180deg, rgba(34,197,94,.12), rgba(34,197,94,0));
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .brand-badge{ display:inline-flex; align-items:center; gap:.5rem; background: rgba(34,197,94,.12); color:#d1fae5; border:1px solid rgba(34,197,94,.3); padding:.35rem .6rem; border-radius: 999px; font-weight:700; }
+    .brand-badge .dot{ width:.55rem; height:.55rem; border-radius:999px; background: var(--brand-1); box-shadow: 0 0 0 4px rgba(34,197,94,.18); }
+    .card{ background: rgba(15,23,42,.75); border: 1px solid rgba(148,163,184,.18); border-radius: 16px; }
+    .btn-brand{ background: linear-gradient(180deg, var(--brand-1), var(--brand-2)); border: none; color: #052e16; font-weight:700; }
+    .btn-ghost{ background: transparent; border:1px solid rgba(148,163,184,.25); color:#e5e7eb; }
+    .btn-ghost.active{ border-color: rgba(34,197,94,.65); background: rgba(34,197,94,.12); color:#bbf7d0; }
+    .table{ color:#cbd5e1; }
+    .table thead th{ position: sticky; top:0; z-index:1; background: rgba(15,23,42,.92); text-transform: uppercase; font-size:.8rem; cursor: pointer; }
+    .empty{ text-align:center; padding:40px 16px; color:#94a3b8; border:1px dashed rgba(148,163,184,.25); border-radius:12px; }
+    .spinner-overlay{ position: absolute; inset:0; display:none; align-items:center; justify-content:center; background: rgba(2,6,23,.35); border-radius: 16px; }
+    .spinner-overlay.show{ display:flex; }
+    .highlight{ background: rgba(34,197,94,.25); border-radius: 4px; padding: 0 .2em; }
+    @media (max-width: 575.98px){
+      .hero h1{ font-size:1.05rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="container">
+      <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <span class="brand-badge"><span class="dot"></span> Bills Peru</span>
+          <h1 class="h4 m-0 fw-bold">Buscador de Productos</h1>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="badge text-bg-dark border" id="envChip">Entorno: <span id="envLabel">Test</span></span>
+          <div class="btn-group d-none" id="envButtons">
+            <button id="btnEnvTest" type="button" class="btn btn-sm btn-ghost">Test</button>
+            <button id="btnEnvProd" type="button" class="btn btn-sm btn-ghost">Producción</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container my-4">
+    <section class="card mb-4">
+      <div class="card-body position-relative">
+        <div class="spinner-overlay" id="spinner" aria-hidden="true">
+          <div class="text-center">
+            <div class="spinner-border" role="status"></div>
+            <div class="mt-2 text-secondary small">Consultando…</div>
+          </div>
+        </div>
+
+        <form id="searchForm" class="row g-3">
+          <div class="col-12 col-md-4">
+            <label class="form-label">Buscar por</label>
+            <div class="d-flex gap-2 flex-wrap">
+              <input class="btn-check" type="radio" name="tipo" id="tipoSku" value="sku" checked>
+              <label class="btn btn-ghost" for="tipoSku"><i class="bi bi-upc-scan me-1"></i>SKU</label>
+              <input class="btn-check" type="radio" name="tipo" id="tipoNombre" value="nombre">
+              <label class="btn btn-ghost" for="tipoNombre"><i class="bi bi-card-text me-1"></i>Nombre</label>
+            </div>
+          </div>
+          <div class="col-12 col-md-5">
+            <label for="q" class="form-label">Valor</label>
+            <input id="q" name="q" type="text" class="form-control" placeholder="Ej.: ABC-123 o 'Router Huawei'" required minlength="2">
+          </div>
+          <div class="col-12 col-md-3 d-grid align-items-end">
+            <button id="btnBuscar" type="submit" class="btn btn-brand">
+              <i class="bi bi-search-heart me-1"></i> Buscar
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-table"></i>
+          <strong>Resultados</strong>
+          <span class="badge text-bg-success ms-2 d-none" id="countBadge">0</span>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button id="btnExportCSV" class="btn btn-sm btn-ghost" disabled><i class="bi bi-download me-1"></i>Exportar CSV</button>
+          <button id="btnClear" class="btn btn-sm btn-ghost"><i class="bi bi-x-circle me-1"></i>Limpiar</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="emptyState" class="empty">
+          <div class="mb-2"><i class="bi bi-search"></i></div>
+          <div>Realiza una búsqueda para ver resultados.</div>
+        </div>
+
+        <div class="table-responsive" id="tableWrap" style="display:none; max-height: 60vh;">
+          <table class="table table-hover align-middle" id="resultsTable">
+            <thead id="thead"></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card-footer d-flex justify-content-between small flex-wrap">
+        <div class="text-secondary">Tip: puedes ordenar haciendo clic en el encabezado.</div>
+        <div class="text-secondary" id="tsLabel"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toasts (status feedback preserved) -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1100">
+    <div id="toastOk" class="toast align-items-center text-bg-success border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body"><i class="bi bi-check2-circle me-1"></i> Consulta realizada.</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+    <div id="toastWarn" class="toast align-items-center text-bg-warning border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body"><i class="bi bi-exclamation-triangle me-1"></i> Respuesta sin datos o vacía.</div>
+        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+    <div id="toastErr" class="toast align-items-center text-bg-danger border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body"><i class="bi bi-x-octagon me-1"></i> Error al consultar.</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // ====== CONFIG ======
+    // Cambia a "produccion" para ocultar el switch en la interfaz final
+    const DEFAULT_ENV = "test"; // "test" | "produccion"
+
+    const urls = {
+      test: "https://n8n.srv936604.hstgr.cloud/webhook-test/5ce4bf6e-0e1f-428c-aa5f-4b4933c1d576",
+      produccion: "https://n8n.srv936604.hstgr.cloud/webhook/5ce4bf6e-0e1f-428c-aa5f-4b4933c1d576"
+    };
+
+    let entorno = DEFAULT_ENV;
+    const envLabel = document.getElementById("envLabel");
+    const envButtons = document.getElementById("envButtons");
+    const envChip = document.getElementById("envChip");
+
+    function setEntorno(env){
+      entorno = env;
+      envLabel.textContent = env === "produccion" ? "Producción" : "Test";
+      if (DEFAULT_ENV === "test") {
+        envButtons.classList.remove("d-none");
+        document.getElementById("btnEnvTest").classList.toggle("active", env === "test");
+        document.getElementById("btnEnvProd").classList.toggle("active", env === "produccion");
+      } else {
+        envButtons.classList.add("d-none"); // oculto en producción
+      }
+      // Cambiar estilo del chip según entorno
+      envChip.classList.toggle("text-bg-success", env === "produccion");
+      envChip.classList.toggle("text-bg-dark", env !== "produccion");
+      envChip.classList.toggle("border", true);
+    }
+    document.getElementById("btnEnvTest")?.addEventListener("click", () => setEntorno("test"));
+    document.getElementById("btnEnvProd")?.addEventListener("click", () => setEntorno("produccion"));
+    setEntorno(DEFAULT_ENV);
+
+    const spinner = document.getElementById("spinner");
+    const toast = (id) => new bootstrap.Toast(document.getElementById(id), { delay: 2600 });
+
+    // ====== CONTEXTO (Dashboard App) ======
+    let chatwootMeta = {};
+    function safeParseJSON(x){ try{ return JSON.parse(x) } catch { return null } }
+
+    window.addEventListener("message", (event) => {
+      const ev = typeof event.data === "string" ? safeParseJSON(event.data) : event.data;
+      if (!ev || ev.event !== "appContext") return;
+
+      const conv = ev.data?.conversation || {};
+      const contact = ev.data?.contact || {};
+      const agent = ev.data?.currentAgent || {};
+      const assignee = conv?.meta?.assignee || {};
+
+      chatwootMeta = {
+        account_id: conv.account_id ?? null,
+        inbox_id: conv.inbox_id ?? null,
+        conversation_id: conv.id ?? null,
+        conversation_status: conv.status ?? null,
+        assignee_id: assignee.id ?? null,
+        assignee_name: assignee.name ?? assignee.available_name ?? null,
+        current_user_id: agent.id ?? null,
+        current_user_name: agent.name ?? null,
+        current_user_email: agent.email ?? null,
+        contact_id: contact.id ?? null,
+        contact_name: contact.name ?? null,
+        contact_email: contact.email ?? null,
+        contact_phone: contact.phone_number ?? null,
+        labels: Array.isArray(conv.labels) ? conv.labels : []
+      };
+    });
+
+    try { window.parent?.postMessage('chatwoot-dashboard-app:fetch-info', '*'); } catch {}
+
+    // ====== Helpers ======
+    function highlight(text, needle){
+      if (!needle) return text;
+      const n = needle.toLowerCase();
+      return String(text).replace(new RegExp(n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), (m)=> '<span class="highlight">'+m+'</span>');
+    }
+
+    function toCSV(rows){
+      if (!rows?.length) return "";
+      const cols = [...new Set(rows.flatMap(r => Object.keys(r)))];
+      const esc = (v) => {
+        const s = (v===undefined || v===null) ? "" : String(v);
+        return '\"' + s.replace(/\"/g, '\"\"') + '\"';
+      };
+      const head = cols.map(esc).join(",");
+      const body = rows.map(r => cols.map(c => esc(r[c])).join(",")).join("\\n");
+      return head + "\\n" + body;
+    }
+    function download(filename, text){
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([text], {type:"text/csv;charset=utf-8;"}));
+      a.download = filename; a.click();
+      setTimeout(()=> URL.revokeObjectURL(a.href), 0);
+    }
+    function nowStr(){
+      const d = new Date(); const pad = (n)=> String(n).padStart(2, "0");
+      return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes());
+    }
+
+    // ====== Tabla ======
+    let currentRows = [];
+    let currentSort = { key:null, dir: 1 };
+    const thead = document.getElementById("thead");
+    const tbody = document.getElementById("tbody");
+    const tableWrap = document.getElementById("tableWrap");
+    const emptyState = document.getElementById("emptyState");
+    const countBadge = document.getElementById("countBadge");
+    const tsLabel = document.getElementById("tsLabel");
+    const btnExportCSV = document.getElementById("btnExportCSV");
+
+    function inferRows(data){
+      if (!data) return [];
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data.items)) return data.items;
+      if (Array.isArray(data.data)) return data.data;
+      if (Array.isArray(data.results)) return data.results;
+      if (Array.isArray(data.products)) return data.products;
+      if (typeof data === "object") return [data];
+      return [];
+    }
+
+    function deriveColumns(rows){
+      const cols = new Set();
+      rows.forEach(r => Object.keys(r || {}).forEach(k => cols.add(k)));
+      return [...cols];
+    }
+
+    function sortRows(rows, key, dir){
+      const copy = [...rows];
+      copy.sort((a,b) => {
+        const va = a?.[key];
+        const vb = b?.[key];
+        const na = typeof va === "number" ? va : Number(va);
+        const nb = typeof vb === "number" ? vb : Number(vb);
+        if (!Number.isNaN(na) && !Number.isNaN(nb)) {
+          return (na - nb) * dir;
+        }
+        return String(va ?? "").localeCompare(String(vb ?? ""), undefined, { sensitivity:"base" }) * dir;
+      });
+      return copy;
+    }
+
+    function renderTable(rows, needle){
+      currentRows = rows;
+      const cols = deriveColumns(rows);
+
+      // header
+      thead.innerHTML = "";
+      const trh = document.createElement("tr");
+      cols.forEach(col => {
+        const th = document.createElement("th");
+        th.textContent = col;
+        th.dataset.key = col;
+        th.addEventListener("click", () => {
+          if (currentSort.key === col) currentSort.dir *= -1;
+          else { currentSort.key = col; currentSort.dir = 1; }
+          const sorted = sortRows(currentRows, currentSort.key, currentSort.dir);
+          renderBody(sorted, needle, cols);
+        });
+        trh.appendChild(th);
+      });
+      thead.appendChild(trh);
+
+      // body
+      renderBody(rows, needle, cols);
+
+      // UI state
+      countBadge.classList.toggle("d-none", rows.length === 0);
+      countBadge.textContent = rows.length;
+      tableWrap.style.display = rows.length ? "" : "none";
+      emptyState.style.display = rows.length ? "none" : "";
+      btnExportCSV.disabled = rows.length === 0;
+      tsLabel.textContent = rows.length ? "Actualizado: " + nowStr() : "";
+    }
+
+    function renderBody(rows, needle, cols){
+      tbody.innerHTML = "";
+      rows.forEach(r => {
+        const tr = document.createElement("tr");
+        cols.forEach(c => {
+          const td = document.createElement("td");
+          const v = r?.[c];
+          let display = v;
+          if (v && typeof v === "object") display = JSON.stringify(v);
+          if (typeof v === "boolean") display = v ? "Sí" : "No";
+          td.innerHTML = (display ?? display === 0) ? highlight(String(display), needle) : "<span class='text-secondary'>—</span>";
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ====== Acciones ======
+    document.getElementById("btnClear").addEventListener("click", () => {
+      document.getElementById("q").value = "";
+      renderTable([], "");
+    });
+
+    document.getElementById("btnExportCSV").addEventListener("click", () => {
+      const csv = toCSV(currentRows);
+      if (!csv) return;
+      const env = entorno === "produccion" ? "prod" : "test";
+      download(`productos_${env}_${Date.now()}.csv`, csv);
+    });
+
+    // ====== Submit con manejo robusto de estados (NO quitar) ======
+    document.getElementById("searchForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const tipo = form.tipo.value;
+      const q = form.q.value.trim();
+      if (q.length < 2) return;
+
+      spinner.classList.add("show");
+      try {
+        const res = await fetch(urls[entorno], {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query: { type: tipo, value: q },
+            chatwootMeta,
+            env: entorno
+          })
+        });
+
+        let data = null;
+        try { data = await res.json(); } catch {}
+
+        if (!res.ok) {
+          new bootstrap.Toast(document.getElementById("toastErr"), { delay: 2800 }).show();
+          throw new Error("HTTP " + res.status);
+        }
+
+        const rows = inferRows(data);
+        if (!rows.length) {
+          new bootstrap.Toast(document.getElementById("toastWarn"), { delay: 2600 }).show();
+        } else {
+          new bootstrap.Toast(document.getElementById("toastOk"), { delay: 2600 }).show();
+        }
+        renderTable(rows, q);
+      } catch (err) {
+        console.error(err);
+        renderTable([], "");
+      } finally {
+        spinner.classList.remove("show"); // evita quedarse "cargando"
+      }
+    });
+  </script>
+</body>
+</html>
