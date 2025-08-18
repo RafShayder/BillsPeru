@@ -249,111 +249,125 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-      // ====== CONFIG ======
-      const modo = "test"; // "produccion" | "test"
-      const urls = {
-        test: "https://n8n.srv936604.hstgr.cloud/webhook-test/29d2d0ba-2fb4-41fd-92a1-4a1867bb4e65",
-        produccion: "https://n8n.srv936604.hstgr.cloud/webhook/29d2d0ba-2fb4-41fd-92a1-4a1867bb4e65",
+  // ====== CONFIG ======
+  const modo = "test"; // "produccion" | "test"
+  const urls = {
+    test: "https://n8n.srv936604.hstgr.cloud/webhook-test/29d2d0ba-2fb4-41fd-92a1-4a1867bb4e65",
+    produccion: "https://n8n.srv936604.hstgr.cloud/webhook/29d2d0ba-2fb4-41fd-92a1-4a1867bb4e65",
+  };
+  const webhookURL = urls[modo];
+  document.getElementById("modoLabel").textContent = (modo === "produccion" ? "producción" : "test");
+
+  // ====== CHATWOOT: obtener contexto para metadata ======
+  let chatwootMeta = {};
+  const isJSON = (s) => { try { JSON.parse(s); return true; } catch { return false; } };
+
+  // Escuchar mensaje con el contexto desde Chatwoot
+  window.addEventListener("message", (event) => {
+    if (!isJSON(event.data)) return;
+    const ev = JSON.parse(event.data);
+    if (ev.event === "appContext") {
+      const ctx = ev.data || {};
+      // Construir metadata segura
+      chatwootMeta = {
+        account_id: ctx.account?.id ?? null,
+        account_name: ctx.account?.name ?? null,
+        inbox_id: ctx.inbox?.id ?? null,
+        inbox_name: ctx.inbox?.name ?? null,
+
+        conversation_id: ctx.conversation?.id ?? null,
+        conversation_status: ctx.conversation?.status ?? null, // open, resolved, snoozed...
+        assignee_id: ctx.conversation?.assignee?.id ?? null,
+        assignee_name: ctx.conversation?.assignee?.name ?? null,
+
+        current_user_id: ctx.current_user?.id ?? null,
+        current_user_name: ctx.current_user?.name ?? null,     // agente que usa el widget
+        current_user_email: ctx.current_user?.email ?? null,   // NUEVO: email del remitente
+
+        contact_id: ctx.contact?.id ?? null,
+        contact_name: ctx.contact?.name ?? null,
+        contact_email: ctx.contact?.email ?? null,
+        contact_phone: ctx.contact?.phone_number ?? null,
+
+        labels: ctx.conversation?.labels ?? []
       };
-      const webhookURL = urls[modo];
-      document.getElementById("modoLabel").textContent = (modo === "produccion" ? "producción" : "test");
 
-      // ====== CHATWOOT: obtener contexto para metadata ======
-      let chatwootMeta = {};
-      const isJSON = (s) => { try { JSON.parse(s); return true; } catch { return false; } };
+      // ====== NUEVO: Autocompletar campos si están vacíos ======
+      const nombreEl = document.getElementById("nombre");
+      const celEl    = document.getElementById("celular");
 
-      // Escuchar mensaje con el contexto desde Chatwoot
-      window.addEventListener("message", (event) => {
-        if (!isJSON(event.data)) return;
-        const ev = JSON.parse(event.data);
-        if (ev.event === "appContext") {
-          const ctx = ev.data || {};
-          // Construir metadata segura
-          chatwootMeta = {
-            account_id: ctx.account?.id ?? null,
-            account_name: ctx.account?.name ?? null,
-            inbox_id: ctx.inbox?.id ?? null,
-            inbox_name: ctx.inbox?.name ?? null,
+      if (nombreEl && !nombreEl.value && chatwootMeta.contact_name) {
+        nombreEl.value = chatwootMeta.contact_name;
+      }
+      if (celEl && !celEl.value && chatwootMeta.contact_phone) {
+        celEl.value = chatwootMeta.contact_phone;
+      }
+      // ====== FIN NUEVO ======
+    }
+  });
 
-            conversation_id: ctx.conversation?.id ?? null,
-            conversation_status: ctx.conversation?.status ?? null, // open, resolved, snoozed...
-            assignee_id: ctx.conversation?.assignee?.id ?? null,
-            assignee_name: ctx.conversation?.assignee?.name ?? null,
+  // Pedir el contexto al cargar (funciona cuando el HTML está incrustado como Dashboard App)
+  window.parent?.postMessage('chatwoot-dashboard-app:fetch-info', '*');
 
-            current_user_id: ctx.current_user?.id ?? null,
-            current_user_name: ctx.current_user?.name ?? null, // agente que está usando el widget
+  // ====== UI Helpers ======
+  const toast = (id) => new bootstrap.Toast(document.getElementById(id), { delay: 3000 });
+  const btnEnviar = document.getElementById("btnEnviar");
+  const setLoading = (loading) => {
+    btnEnviar.disabled = loading;
+    btnEnviar.querySelector(".spinner-border").classList.toggle("d-none", !loading);
+    btnEnviar.querySelector(".btn-text").innerHTML = loading
+      ? '<i class="bi bi-arrow-repeat me-1"></i> Enviando...'
+      : '<i class="bi bi-check2-circle me-1"></i> Enviar';
+  };
 
-            contact_id: ctx.contact?.id ?? null,
-            contact_name: ctx.contact?.name ?? null,
-            contact_email: ctx.contact?.email ?? null,
-            contact_phone: ctx.contact?.phone_number ?? null,
+  // ====== Validación + Envío ======
+  (() => {
+    const form = document.getElementById("ventaForm");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-            labels: ctx.conversation?.labels ?? []
-          };
+      form.classList.add("was-validated");
+      if (!form.checkValidity()) return;
+
+      const payload = {
+        dni: document.getElementById("dni").value.trim(),
+        nombre: document.getElementById("nombre").value.trim(),
+        direccion: document.getElementById("direccion").value.trim(),
+        celular: document.getElementById("celular").value.trim(),
+        sku: document.getElementById("sku").value.trim(),
+        currier: document.getElementById("currier").value,
+        cantidad: Number(document.getElementById("cantidad").value),
+        precio: Number(document.getElementById("precio").value),
+        observacion: document.getElementById("observacion").value.trim(),
+
+        // 👉 Metadata de Chatwoot (incluye current_user_email)
+        chatwootMeta
+      };
+
+      try {
+        setLoading(true);
+        const response = await fetch(webhookURL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (response.ok) {
+          toast("toastOk").show();
+          form.reset();
+          form.classList.remove("was-validated");
+        } else {
+          toast("toastError").show();
         }
-      });
+      } catch (error) {
+        toast("toastWarn").show();
+      } finally {
+        setLoading(false);
+      }
+    }, false);
+  })();
+</script>
 
-      // Pedir el contexto al cargar (funciona cuando el HTML está incrustado como Dashboard App)
-      window.parent?.postMessage('chatwoot-dashboard-app:fetch-info', '*');
-
-      // ====== UI Helpers ======
-      const toast = (id) => new bootstrap.Toast(document.getElementById(id), { delay: 3000 });
-      const btnEnviar = document.getElementById("btnEnviar");
-      const setLoading = (loading) => {
-        btnEnviar.disabled = loading;
-        btnEnviar.querySelector(".spinner-border").classList.toggle("d-none", !loading);
-        btnEnviar.querySelector(".btn-text").innerHTML = loading
-          ? '<i class="bi bi-arrow-repeat me-1"></i> Enviando...'
-          : '<i class="bi bi-check2-circle me-1"></i> Enviar';
-      };
-
-      // ====== Validación + Envío ======
-      (() => {
-        const form = document.getElementById("ventaForm");
-        form.addEventListener("submit", async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-
-          form.classList.add("was-validated");
-          if (!form.checkValidity()) return;
-
-          const payload = {
-            dni: document.getElementById("dni").value.trim(),
-            nombre: document.getElementById("nombre").value.trim(),
-            direccion: document.getElementById("direccion").value.trim(),
-            celular: document.getElementById("celular").value.trim(),
-            sku: document.getElementById("sku").value.trim(),
-            currier: document.getElementById("currier").value,
-            cantidad: Number(document.getElementById("cantidad").value),
-            precio: Number(document.getElementById("precio").value),
-            observacion: document.getElementById("observacion").value.trim(),
-
-            // 👉 Metadata de Chatwoot
-            chatwootMeta
-          };
-
-          try {
-            setLoading(true);
-            const response = await fetch(webhookURL, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload),
-            });
-
-            if (response.ok) {
-              toast("toastOk").show();
-              form.reset();
-              form.classList.remove("was-validated");
-            } else {
-              toast("toastError").show();
-            }
-          } catch (error) {
-            toast("toastWarn").show();
-          } finally {
-            setLoading(false);
-          }
-        }, false);
-      })();
-    </script>
   </body>
 </html>
