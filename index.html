@@ -263,48 +263,58 @@
   const isJSON = (s) => { try { JSON.parse(s); return true; } catch { return false; } };
 
   // Escuchar mensaje con el contexto desde Chatwoot
-  window.addEventListener("message", (event) => {
-    if (!isJSON(event.data)) return;
-    const ev = JSON.parse(event.data);
-    if (ev.event === "appContext") {
-      const ctx = ev.data || {};
-      // Construir metadata segura
-      chatwootMeta = {
-        account_id: ctx.account?.id ?? null,
-        account_name: ctx.account?.name ?? null,
-        inbox_id: ctx.inbox?.id ?? null,
-        inbox_name: ctx.inbox?.name ?? null,
+  // Escuchar mensaje con el contexto desde Chatwoot (Dashboard App)
+window.addEventListener("message", (event) => {
+  // valida JSON
+  let ev;
+  try { ev = JSON.parse(event.data); } catch { return; }
+  if (ev.event !== "appContext") return;
 
-        conversation_id: ctx.conversation?.id ?? null,
-        conversation_status: ctx.conversation?.status ?? null, // open, resolved, snoozed...
-        assignee_id: ctx.conversation?.assignee?.id ?? null,
-        assignee_name: ctx.conversation?.assignee?.name ?? null,
+  const conv = ev.data?.conversation || {};
+  const contact = ev.data?.contact || {};
+  const agent = ev.data?.currentAgent || {}; // <- nombre correcto
 
-        current_user_id: ctx.current_user?.id ?? null,
-        current_user_name: ctx.current_user?.name ?? null,     // agente que usa el widget
-        current_user_email: ctx.current_user?.email ?? null,   // NUEVO: email del remitente
+  // mapea desde las rutas reales del payload
+  const assignee = conv?.meta?.assignee || {};
 
-        contact_id: ctx.contact?.id ?? null,
-        contact_name: ctx.contact?.name ?? null,
-        contact_email: ctx.contact?.email ?? null,
-        contact_phone: ctx.contact?.phone_number ?? null,
+  chatwootMeta = {
+    // cuenta / inbox vienen en conversation
+    account_id: conv.account_id ?? null,
+    account_name: null, // (no viene en el payload)
+    inbox_id: conv.inbox_id ?? null,
+    inbox_name: null, // (no viene en el payload)
 
-        labels: ctx.conversation?.labels ?? []
-      };
+    conversation_id: conv.id ?? null,
+    conversation_status: conv.status ?? null,
 
-      // ====== NUEVO: Autocompletar campos si están vacíos ======
-      const nombreEl = document.getElementById("nombre");
-      const celEl    = document.getElementById("celular");
+    // asignado (si existe)
+    assignee_id: assignee.id ?? null,
+    assignee_name: assignee.name ?? assignee.available_name ?? null,
 
-      if (nombreEl && !nombreEl.value && chatwootMeta.contact_name) {
-        nombreEl.value = chatwootMeta.contact_name;
-      }
-      if (celEl && !celEl.value && chatwootMeta.contact_phone) {
-        celEl.value = chatwootMeta.contact_phone;
-      }
-      // ====== FIN NUEVO ======
-    }
-  });
+    // agente actual (quién envía desde el dashboard)
+    current_user_id: agent.id ?? null,
+    current_user_name: agent.name ?? null,
+    current_user_email: agent.email ?? null,
+
+    // contacto
+    contact_id: contact.id ?? null,
+    contact_name: contact.name ?? null,
+    contact_email: contact.email ?? null,
+    contact_phone: contact.phone_number ?? null,
+
+    labels: Array.isArray(conv.labels) ? conv.labels : []
+  };
+
+  // Autocompletar si están vacíos
+  const nombreEl = document.getElementById("nombre");
+  const celEl = document.getElementById("celular");
+  if (nombreEl && !nombreEl.value && chatwootMeta.contact_name) {
+    nombreEl.value = chatwootMeta.contact_name;
+  }
+  if (celEl && !celEl.value && chatwootMeta.contact_phone) {
+    celEl.value = chatwootMeta.contact_phone;
+  }
+});
 
   // Pedir el contexto al cargar (funciona cuando el HTML está incrustado como Dashboard App)
   window.parent?.postMessage('chatwoot-dashboard-app:fetch-info', '*');
